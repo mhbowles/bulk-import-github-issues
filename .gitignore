@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+
+# Exported tracker data and run output - regenerated, and bug reports should
+# not be committed to a shared repo.
+csv*/
+import-logs*/
+sample-output/
+*.csv.bak
+
+# Tracker workbooks hold the same bug data as the CSVs.
+Input/
+*.xlsx
+
+# Write-ups and briefs live outside the repo.
+*.pdf
+
+# Personal Claude Code permissions, with machine-specific paths.
+.claude/settings.local.json
+
+# Google service account key, once the Sheets source lands.
+credentials.json
+token.json
