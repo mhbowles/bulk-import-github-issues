@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bugimport import gh
 from bugimport.cli import main
+from bugimport.select import BLOCKED, IMPORT, Row, classify
 
 HEADER = ["TESTER", "TITLE", "GITHUB STATUS", "GITHUB LINK",
           "REPORT TITLE", "BUG REPORT"]
@@ -90,6 +91,26 @@ def check(condition, message):
     if not condition:
         raise AssertionError(message)
     print("  ok: {}".format(message))
+
+
+def check_spreadsheet_errors():
+    print("\n[0] only a whole-cell spreadsheet error blocks a row")
+
+    def action(title, body):
+        return classify(Row("t.csv", 2, title, body, "", "")).action
+
+    for error in ("#REF!", "#N/A", "#VALUE!", "#DIV/0!", "#NAME?",
+                  "#NUM!", "#NULL!", "#ERROR!", " #REF! "):
+        check(action("WEB: Broken", error) == BLOCKED,
+              "{!r} as the body is blocked".format(error))
+    check(action("#ERROR!", "### Priority:\nP1") == BLOCKED,
+          "an error as the title is blocked")
+    wcag = ("### Priority:\nP1\n\n### Description of Bug:\nFails "
+            "https://www.w3.org/TR/WCAG21/#error-suggestion")
+    check(action("ADMIN: CSV member import", wcag) == IMPORT,
+          "a WCAG #error-suggestion link is not mistaken for an error")
+    check(action("WEB: Docs", "see #ref and #n/a in the notes") == IMPORT,
+          "error-like words inside report text are not errors")
 
 
 def run(work):
@@ -256,6 +277,7 @@ if __name__ == "__main__":
 
     work = Path(tempfile.mkdtemp(prefix="bugimport-test-"))
     try:
+        check_spreadsheet_errors()
         run(work)
         print("\nall checks passed")
     finally:

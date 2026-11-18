@@ -4,9 +4,11 @@ import re
 from collections import namedtuple
 
 # Spreadsheet error values. If a CSV was exported while a formula was broken,
-# these arrive as literal text and must never be posted to GitHub.
+# these arrive as literal text and must never be posted to GitHub. An error
+# replaces the whole cell, so only a cell that is nothing but an error counts:
+# reports legitimately contain text like a WCAG link to .../#error-suggestion.
 SPREADSHEET_ERRORS = re.compile(
-    r"#(REF|N/A|VALUE|DIV/0|NAME|NUM|NULL|ERROR)[!?]?", re.IGNORECASE
+    r"#(REF!|N/A|VALUE!|DIV/0!|NAME\?|NUM!|NULL!|ERROR!)"
 )
 
 # The sheet's own sentinel for a report it considers unfinished.
@@ -65,7 +67,7 @@ def classify(row):
         return Decision(row, SKIP, "status already set to {}".format(row.status))
 
     for field, value in (("title", row.title), ("body", row.body)):
-        error = SPREADSHEET_ERRORS.search(value)
+        error = SPREADSHEET_ERRORS.fullmatch(value.strip())
         if error:
             return Decision(
                 row,
